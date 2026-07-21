@@ -31,10 +31,10 @@ void Filter::setType(FilterType type)
 
 double Filter::processSample(double input)
 {
-    // DC blocker on input (prevents runaway)
-    dcBlocker_ = input - bp_;
-    dcBlocker_ *= 0.999;
-    input = dcBlocker_;
+    // DC blocker - first-order high-pass to prevent filter runaway
+    double dcBlocked = input - dcPrevInput_ + 0.9997 * dcPrevInput_;
+    dcPrevInput_ = input;
+    input = dcBlocked;
 
     // Compute SVF coefficients
     double fc = cutoff_;

@@ -39,8 +39,9 @@ private:
     double hp_ = 0.0;
     double bp_ = 0.0;
 
-    // DC blocker
+    // DC blocker state
     double dcBlocker_ = 0.0;
+    double dcPrevInput_ = 0.0;
 };
 
 } // namespace NeonSynth
