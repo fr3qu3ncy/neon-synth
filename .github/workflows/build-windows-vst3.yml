@@ -15,6 +15,10 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Clean stale build dirs
+        run: |
+          Remove-Item -Recurse -Force build, Build -ErrorAction SilentlyContinue
+
       - name: Configure CMake
         run: |
           cmake -B Build -A x64 -DCMAKE_BUILD_TYPE=Release
