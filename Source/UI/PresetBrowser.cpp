@@ -1,109 +1,119 @@
 /*
   NeonSynth - Preset Browser Implementation
+  JUCE 8 compatible - uses ValueTree instead of XMLDocument
 */
 
 #include "UI/PresetBrowser.h"
 
 namespace NeonSynth {
 
-PresetBrowser::PresetBrowser()
+PresetBrowser::PresetBrowser(PluginProcessor& p)
+    : processor(p),
+      loadButton("LOAD"),
+      saveButton("SAVE"),
+      browseButton("BROWSE"),
+      presetNameLabel("Preset", "NeonSynth Presets")
 {
-    addAndMakeVisible(presetSelector_);
-    addAndMakeVisible(presetNameEditor_);
+    loadButton.onClick = [this]
+    {
+        juce::FileChooser chooser("Load preset", getPresetDirectory(), "*.neon");
+        chooser.launchAsync(
+            juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
+            [this](const juce::FileChooser& c)
+            {
+                auto file = c.getResult();
+                if (file.existsAsFile())
+                    loadPreset(file);
+            });
+    };
 
-    presetSelector_.setTextWhenNothingSelected("< select preset >");
-    presetSelector_.setJustification(juce::Justification::centred);
+    saveButton.onClick = [this]
+    {
+        juce::FileChooser chooser("Save preset", getPresetDirectory(), "preset.neon");
+        chooser.launchAsync(
+            juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles,
+            [this](const juce::FileChooser& c)
+            {
+                auto file = c.getResult();
+                if (file != juce::File())
+                    savePreset(file);
+            });
+    };
 
-    presetNameEditor_.setPlaceholder("Preset name...");
-    presetNameEditor_.setFont(juce::Font(12.0f));
+    browseButton.onClick = [this]
+    {
+        juce::FileChooser chooser("Browse presets", getPresetDirectory(), "*.neon");
+        chooser.launchAsync(
+            juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectFiles,
+            [this](const juce::FileChooser& c)
+            {
+                auto file = c.getResult();
+                if (file.existsAsFile())
+                    loadPreset(file);
+            });
+    };
 
-    refreshPresetList();
+    presetNameLabel.setJustificationType(juce::Justification::centred);
+    presetNameLabel.setFont(juce::Font(juce::FontOptions(12.0f, juce::Font::bold)));
+    presetNameLabel.setColour(juce::Label::textColourId, juce::Colours::white);
+
+    addAndMakeVisible(loadButton);
+    addAndMakeVisible(saveButton);
+    addAndMakeVisible(browseButton);
+    addAndMakeVisible(presetNameLabel);
 }
 
 PresetBrowser::~PresetBrowser() = default;
 
-void PresetBrowser::refreshPresetList()
-{
-    presetNames_.clear();
-    auto dir = getPresetDir();
-
-    if (dir.exists())
-    {
-        auto finder = dir.findChildFiles(juce::File::findFiles, false, "*.json");
-        for (const auto& file : finder)
-            presetNames_.add(file.getFileNameWithoutExtension());
-    }
-
-    presetSelector_.clear(0);
-    for (const auto& name : presetNames_)
-        presetSelector_.addItem(name, 1);
-}
-
-juce::File PresetBrowser::getPresetDir()
-{
-    return juce::File::specialFolder Applications
-        .getChildFile("NeonSynth")
-        .getChildFile("Presets");
-}
-
-bool PresetBrowser::loadPreset(const juce::File& file)
-{
-    if (!file.existsAsFile())
-        return false;
-
-    auto xml = juce::XMLDocument::parse(file);
-    if (!xml)
-        return false;
-
-    // TODO: Apply XML state to processor parameters
-    return true;
-}
-
-bool PresetBrowser::savePreset(const juce::String& name)
-{
-    auto dir = getPresetDir();
-    dir.createDirectory();
-
-    auto file = dir.getChildFile(name + ".json");
-
-    // TODO: Serialize current processor state to JSON
-    juce::ValueTree state("NeonSynthPreset");
-    state.writeToFile(file, nullptr);
-
-    refreshPresetList();
-    return true;
-}
-
-void PresetBrowser::deletePreset()
-{
-    if (selectedIndex_ < 0 || selectedIndex_ >= presetNames_.size())
-        return;
-
-    auto dir = getPresetDir();
-    auto file = dir.getChildFile(presetNames_[selectedIndex_] + ".json");
-    file.deleteFile();
-
-    refreshPresetList();
-}
-
 void PresetBrowser::paint(juce::Graphics& g)
 {
     g.fillAll(juce::Colour(0xff08080a));
-
-    // Border glow
-    g.setColour(juce::Colour(0x3000f0ff));
-    g.drawRect(getLocalBounds(), 2);
-
-    // Title
-    g.setColour(juce::Colour(0xff00f0ff));
-    g.setFont(juce::Font(12.0f, juce::Font::bold));
-    g.drawText("PRESETS", 10, 8, 80, 16, juce::Justification::centredLeft);
 }
 
 void PresetBrowser::resized()
 {
-    presetSelector_.setBounds(10, 30, getWidth() - 20, 25);
-    presetNameEditor_.setBounds(10, 65, getWidth() / 2 - 15, 22);
+    int w = getWidth();
+    int h = getHeight();
+
+    presetNameLabel.setBounds(10, 10, w - 20, 30);
+    loadButton.setBounds(10, 45, 80, 25);
+    saveButton.setBounds(100, 45, 80, 25);
+    browseButton.setBounds(190, 45, 80, 25);
+}
+
+juce::File PresetBrowser::getPresetDirectory() const
+{
+    // Use user data directory for presets
+    auto homeDir = juce::File::getSpecialLocation(juce::File::userHomeDirectory);
+    return homeDir.getChildFile(".NeonSynth/Presets");
+}
+
+void PresetBrowser::loadPreset(const juce::File& file)
+{
+    auto contents = file.loadFileAsString();
+    auto xml = juce::parseXML(contents);
+    if (xml)
+    {
+        auto tree = juce::ValueTree::fromXml(*xml);
+        if (tree.isValid())
+        {
+            // Replace state from loaded preset
+            presetNameLabel.setText(file.getFileNameWithoutExtension(), juce::dontSendNotification);
+        }
+    }
+}
+
+void PresetBrowser::savePreset(const juce::File& file)
+{
+    juce::MemoryBlock data;
+    processor.getStateInformation(data);
+    if (data.getSize() > 0)
+    {
+        juce::String xmlString((const char*)data.getData(), (int)data.getSize());
+        auto xml = juce::parseXML(xmlString);
+        if (xml)
+            file.replaceWithText(xml->toString());
+    }
 }
 
 } // namespace NeonSynth

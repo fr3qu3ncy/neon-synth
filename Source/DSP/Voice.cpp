@@ -49,7 +49,7 @@ double Voice::midiToFreq(double note)
 double Voice::panToGain(double pan, bool left)
 {
     // Equal-power panning
-    double angle = pan * MathConstants<double>::pi * 0.5;
+    double angle = pan * juce::MathConstants<double>::pi * 0.5;
     return left ? std::cos(angle) : std::sin(angle);
 }
 

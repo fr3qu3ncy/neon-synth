@@ -3,6 +3,7 @@
 A dual-oscillator subtractive synthesizer VST3 plugin with a smart neon aesthetic.
 
 ![NeonSynth](https://img.shields.io/badge/status-development-blue)
+
 ![License](https://img.shields.io/badge/license-MIT-green)
 
 ## Features
@@ -24,11 +25,11 @@ OSC2 ──┘
 
 ## Requirements
 
-| Platform | Dependencies |
-|----------|-------------|
-| **Linux** | g++ 11+, CMake 3.15+, pkg-config, ALSA dev, X11 dev, FreeType, OpenGL |
-| **macOS** | Xcode CLT, CMake 3.15+, macOS 10.13+ |
-| **Windows** | Visual Studio 2019+, CMake 3.15+ |
+| Platform    | Dependencies                                                          |
+| ----------- | --------------------------------------------------------------------- |
+| **Linux**   | g++ 11+, CMake 3.15+, pkg-config, ALSA dev, X11 dev, FreeType, OpenGL |
+| **macOS**   | Xcode CLT, CMake 3.15+, macOS 10.13+                                  |
+| **Windows** | Visual Studio 2019+, CMake 3.15+                                      |
 
 ### Linux (Debian/Ubuntu)
 
@@ -69,11 +70,11 @@ The VST3 plugin will be output to `Build/bin/VST3/NeonSynth.vst3`.
 
 ### Platform-specific output
 
-| Platform | Output Path |
-|----------|------------|
-| Linux | `Build/bin/VST3/NeonSynth.vst3` |
-| macOS | `Build/bin/NeonSynth.vst3` |
-| Windows | `Build\bin\VST3\NeonSynth.vst3` |
+| Platform | Output Path                     |
+| -------- | ------------------------------- |
+| Linux    | `Build/bin/VST3/NeonSynth.vst3` |
+| macOS    | `Build/bin/NeonSynth.vst3`      |
+| Windows  | `Build\bin\VST3\NeonSynth.vst3` |
 
 ### Memory-constrained builds
 
@@ -87,12 +88,12 @@ make -j2
 
 Copy the `.vst3` bundle to your DAW's plugin search path:
 
-| DAW | Path |
-|-----|------|
-| Reaper | `~/.vst3/` (Linux) or `/Library/Audio/Plug-Ins/VST3/` (macOS) |
-| Ableton Live | Auto-scans standard VST3 paths |
-| Bitwig Studio | Auto-scans standard VST3 paths |
-| FL Studio | `Options > Settings > File Paths > VST plugin paths` |
+| DAW           | Path                                                          |
+| ------------- | ------------------------------------------------------------- |
+| Reaper        | `~/.vst3/` (Linux) or `/Library/Audio/Plug-Ins/VST3/` (macOS) |
+| Ableton Live  | Auto-scans standard VST3 paths                                |
+| Bitwig Studio | Auto-scans standard VST3 paths                                |
+| FL Studio     | `Options > Settings > File Paths > VST plugin paths`          |
 
 ## Architecture
 

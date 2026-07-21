@@ -65,10 +65,10 @@ void EnvelopeEditor::paint(juce::Graphics& g)
     // Phase labels
     g.setColour(juce::Colour(0xff666670));
     g.setFont(juce::Font(9.0f));
-    g.drawText("A", margin + 5, h - 15, 15, 12);
-    g.drawText("D", static_cast<int>(aEnd), h - 15, 15, 12);
-    g.drawText("S", static_cast<int>(dEnd), h - 15, 15, 12);
-    g.drawText("R", static_cast<int>(sEnd) + 10, h - 15, 15, 12);
+    g.drawText("A", margin + 5, h - 15, 15, 12, juce::Justification::centred);
+    g.drawText("D", static_cast<int>(aEnd), h - 15, 15, 12, juce::Justification::centred);
+    g.drawText("S", static_cast<int>(dEnd), h - 15, 15, 12, juce::Justification::centred);
+    g.drawText("R", static_cast<int>(sEnd) + 10, h - 15, 15, 12, juce::Justification::centred);
 }
 
 void EnvelopeEditor::mouseDown(const juce::MouseEvent&) {}

@@ -1,6 +1,7 @@
 /*
-  NeonSynth - Oscilloscope Component
-  OpenGL-based real-time waveform visualization
+  NeonSynth - Oscilloscope Visualization
+  Real-time waveform display
+  JUCE 8 compatible
 */
 
 #pragma once
@@ -13,15 +14,14 @@ class Oscilloscope : public juce::Component
 {
 public:
     Oscilloscope();
-    ~OscillatorScope() override;
+    ~Oscilloscope() override;
 
-    void paint(juce::Graphics&) override;
-    void update(const std::vector<float>& osc1Data, const std::vector<float>& osc2Data);
+    void update(const float* data, int numSamples);
+    void paint(juce::Graphics& g) override;
 
 private:
-    std::vector<float> osc1Buffer_;
-    std::vector<float> osc2Buffer_;
-    juce::CriticalSection bufferLock_;
+    std::vector<float> waveform_;
+    juce::CriticalSection waveLock_;
 };
 
 } // namespace NeonSynth

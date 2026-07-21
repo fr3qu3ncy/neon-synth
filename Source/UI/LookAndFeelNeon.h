@@ -1,6 +1,6 @@
 /*
-  NeonSynth - Neon LookAndFeel
-  Custom theme: deep charcoal bg, cyan/magenta neon accents
+  NeonSynth - Custom Look and Feel
+  Neon synth UI styling for JUCE 8.0.14
 */
 
 #pragma once
@@ -12,23 +12,27 @@ namespace NeonSynth {
 class LookAndFeelNeon : public juce::LookAndFeel_V4
 {
 public:
-    LookAndFeelNeon();
+    LookAndFeelNeon() = default;
 
-    // Colours
-    juce::Colour bgDark = juce::Colour(0xff0d0d0f);
-    juce::Colour neonCyan = juce::Colour(0xff00f0ff);
-    juce::Colour neonMagenta = juce::Colour(0xffff00aa);
-    juce::Colour neonBlue = juce::Colour(0xff4060ff);
-    juce::Colour textWhite = juce::Colour(0xfff0f0f0);
-    juce::Colour dimText = juce::Colour(0xff666670);
+    // Override rotary slider drawing
+    void drawRotarySlider(juce::Graphics& g, int x, int y, int w, int h,
+                          float sliderPos, const float rotaryStartAngle,
+                          const float rotaryEndAngle, juce::Slider&) override;
 
-    void drawRotarySlider(juce::Graphics&, int x, int y, int w, int h,
-                          float sliderPos, float rotaryStartAngle,
-                          float rotaryEndAngle, juce::Slider&) override;
-    void drawButtonText(juce::Graphics&, juce::Button&,
-                        bool isMouseOverButton, bool isMouseDown) override;
-    void drawComboBox(juce::Graphics&, int w, int h, bool,
-                      int, int, int, int, juce::ComboBox&) override;
+    // Override text button drawing
+    void drawButtonText(juce::Graphics& g, juce::TextButton& button,
+                        bool isMouseOverButton, bool isMouseDraggingOutsideButton) override;
+
+    // Neon color palette
+    static juce::Colour neonCyan()   { return juce::Colour(0xff00ffff); }
+    static juce::Colour neonPink()   { return juce::Colour(0xffff00aa); }
+    static juce::Colour neonBlue()   { return juce::Colour(0xff4060ff); }
+    static juce::Colour bgDark()     { return juce::Colour(0xff08080a); }
+    static juce::Colour textWhite()  { return juce::Colour(0xffe0e0e0); }
+    static juce::Colour gridLine()   { return juce::Colour(0x154060ff); }
+
+private:
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LookAndFeelNeon)
 };
 
 } // namespace NeonSynth

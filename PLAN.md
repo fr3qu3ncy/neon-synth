@@ -1,15 +1,18 @@
 # Neon Synth — VST3 Synthesizer Plugin
 
 ## Overview
+
 A polyphonic subtractive synthesizer VST3 plugin with 2 oscillators, dual ADSR envelopes, 3 filter types, and preset management. Modern smart neon aesthetic.
 
 ## Tech Stack
+
 - **Framework:** JUCE (C++) — VST3/AU/AWV export, DSP, GUI
 - **Build:** CMake
 - **Target:** Linux VST3 first (macOS/Windows cross-platform capable)
 - **Polyphony:** 16 voices max with voice stealing
 
 ## Signal Flow
+
 ```
 OSC1 ──┐
         ├─→ VCA ──→ VCF ──→ Output
@@ -19,6 +22,7 @@ OSC2 ──┘
 ## DSP Architecture
 
 ### Oscillators (×2)
+
 - **Waveforms:** sine, saw, square, triangle
 - **Range:** 20 Hz – 20 kHz (full keyboard tracking)
 - **Detune:** ±50 cents per oscillator
@@ -27,11 +31,13 @@ OSC2 ──┘
 - **Implementation:** Wavetable synthesis with zero-crossing interpolation (BLIT/BLIT2 for band-limited square/saw)
 
 ### Envelopes (×2, ADSR)
+
 - **Amplitude Envelope (VCA):** Attack, Decay, Sustain, Release — drives VCA gain per note
 - **Filter Envelope (VCF):** Attack, Decay, Sustain, Release — drives filter cutoff deviation (0–12 semitones)
 - **Keyboard retrigger toggle** per envelope
 
 ### Filters (switchable)
+
 - **Low Pass** (12dB/oct) — state-variable filter
 - **High Pass** (12dB/oct) — same topology
 - **Band Pass** (12dB/oct) — same topology
@@ -40,6 +46,7 @@ OSC2 ──┘
 - **Keyboard tracking toggle** for cutoff
 
 ### Voice Management
+
 - 16-voice polyphony
 - Per-voice: 2 oscillators + 2 envelopes + 1 filter
 - Voice stealing on note overflow (oldest note first)
@@ -48,6 +55,7 @@ OSC2 ──┘
 ## UI Design — "Smart Neon"
 
 ### Palette
+
 - Background: deep charcoal (#0d0d0f)
 - Primary accent: cyan (#00f0ff)
 - Secondary accent: magenta (#ff00aa)
@@ -55,6 +63,7 @@ OSC2 ──┘
 - Text: white (#f0f0f0)
 
 ### Visual Treatment
+
 - Circular knobs with neon ring glow (OpenGL shader blur)
 - Active controls pulse subtly (breathing glow animation)
 - Vertical neon sliders with gradient fills
@@ -64,6 +73,7 @@ OSC2 ──┘
 - Preset browser: scrollable list with neon-highlighted selection
 
 ### Layout (800×500)
+
 ```
 ┌──────────────────────────────────────────────┐
 │  [OSC1 controls]    [OSC2 controls]          │
@@ -84,6 +94,7 @@ OSC2 ──┘
 ```
 
 ## Presets
+
 - **Format:** JSON via `juce::ValueTree` serialization
 - **Storage:** `JucePluginUserResourcesPath`
 - **Operations:** save / load / delete / browse
@@ -92,6 +103,7 @@ OSC2 ──┘
 ## Build Plan
 
 ### Phase 1 — DSP Core (Days 1–4)
+
 1. JUCE project scaffolding with CMake
 2. `AudioProcessor` with plugin manifest (VST3)
 3. Wavetable oscillator class with band-limited waveforms
@@ -104,6 +116,7 @@ OSC2 ──┘
 10. Unit tests for DSP components
 
 ### Phase 2 — UI (Days 5–8)
+
 1. `AudioProcessorEditor` layout
 2. Custom `LookAndFeel` subclass (neon theme)
 3. Custom rotary knobs with glow
@@ -114,6 +127,7 @@ OSC2 ──┘
 8. Preset browser panel
 
 ### Phase 3 — Presets + Polish (Days 9–10)
+
 1. `ValueTree` parameter serialization
 2. JSON file I/O for presets
 3. Factory presets (8–12)
@@ -123,15 +137,16 @@ OSC2 ──┘
 
 ## Technical Risks & Mitigations
 
-| Risk | Mitigation |
-|------|-----------|
+| Risk                              | Mitigation                                            |
+| --------------------------------- | ----------------------------------------------------- |
 | SVF stability at all sample rates | DC blocking filter + dithering + coefficient clamping |
-| Aliasing on square/saw | BLIT/BLIT2 band-limited waveforms |
-| Neon glow CPU cost | Offscreen buffer + composite, not per-control blur |
-| 16-voice × 2 envs = 32 envelopes | Efficient voice pool + lazy allocation |
-| No system apt access | Download cmake binary from GitHub releases |
+| Aliasing on square/saw            | BLIT/BLIT2 band-limited waveforms                     |
+| Neon glow CPU cost                | Offscreen buffer + composite, not per-control blur    |
+| 16-voice × 2 envs = 32 envelopes  | Efficient voice pool + lazy allocation                |
+| No system apt access              | Download cmake binary from GitHub releases            |
 
 ## Project Structure
+
 ```
 neon-synth/
 ├── CMakeLists.txt

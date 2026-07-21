@@ -1,5 +1,6 @@
 /*
   NeonSynth - Oscilloscope Implementation
+  JUCE 8 compatible
 */
 
 #include "UI/Oscilloscope.h"
@@ -8,92 +9,70 @@ namespace NeonSynth {
 
 Oscilloscope::Oscilloscope()
 {
-    setOpaque(true);
+    waveform_.resize(1024, 0.0f);
 }
 
 Oscilloscope::~Oscilloscope() = default;
+
+void Oscilloscope::update(const float* data, int numSamples)
+{
+    juce::ScopedLock lock(waveLock_);
+    for (int i = 0; i < numSamples && i < (int)waveform_.size(); ++i)
+        waveform_[i] = data[i];
+}
 
 void Oscilloscope::paint(juce::Graphics& g)
 {
     g.fillAll(juce::Colour(0xff08080a));
 
-    auto lock = juce::ScopedLock(bufferLock_);
-
     int w = getWidth();
     int h = getHeight();
-    int midY = h / 2;
+    int margin = 10;
 
-    // Grid lines
-    g.setColour(juce::Colour(0x1500f0ff));
-    for (int i = 1; i < 4; ++i)
     {
-        int y = midY - (h / 4) * i;
-        g.drawLine(0, y, w, y, 1.0f);
-        y = midY + (h / 4) * i;
-        g.drawLine(0, y, w, y, 1.0f);
-    }
+        juce::ScopedLock lock(waveLock_);
 
-    // Center line
-    g.setColour(juce::Colour(0x3000f0ff));
-    g.drawLine(0, midY, w, midY, 1.0f);
+        if (waveform_.empty())
+            return;
 
-    // OSC1 waveform - cyan
-    if (!osc1Buffer_.empty())
-    {
-        g.setColour(juce::Colour(0xff00f0ff));
-        g.setStrokeType(1.0f, 2.0f);
+        // Center line
+        g.setColour(juce::Colour(0x154060ff));
+        g.drawLine(margin, h / 2, w - margin, h / 2, 1.0f);
 
-        juce::Path p1;
-        for (size_t i = 0; i < osc1Buffer_.size(); ++i)
+        // Waveform path
+        juce::Path path;
+        bool first = true;
+
+        const int N = (int)waveform_.size();
+        for (int i = 0; i < N && i < w - 2 * margin; ++i)
         {
-            float x = static_cast<float>(i) / osc1Buffer_.size() * w;
-            float y = midY - osc1Buffer_[i] * (midY * 0.8f);
-            if (i == 0) p1.startNewSubPath(x, y);
-            else p1.lineTo(x, y);
-        }
-        g.strokePath(p1, juce::PathStrokeType(2.0f));
+            float x = margin + (float)i / N * (w - 2 * margin);
+            float y = h / 2 - waveform_[i] * (h / 2 - margin);
 
-        // Glow layer
-        g.setColour(juce::Colour(0x4000f0ff));
-        g.strokePath(p1, juce::PathStrokeType(6.0f));
+            if (first)
+            {
+                path.startNewSubPath(x, y);
+                first = false;
+            }
+            else
+            {
+                path.lineTo(x, y);
+            }
+        }
+
+        // Glow
+        g.setColour(juce::Colour(0x3000ffff));
+        g.strokePath(path, juce::PathStrokeType(6.0f));
+
+        // Main line
+        g.setColour(juce::Colour(0xff00ffff));
+        g.strokePath(path, juce::PathStrokeType(2.0f));
     }
 
-    // OSC2 waveform - magenta
-    if (!osc2Buffer_.empty())
-    {
-        g.setColour(juce::Colour(0xffff00aa));
-        g.setStrokeType(1.0f, 2.0f);
-
-        juce::Path p2;
-        for (size_t i = 0; i < osc2Buffer_.size(); ++i)
-        {
-            float x = static_cast<float>(i) / osc2Buffer_.size() * w;
-            float y = midY - osc2Buffer_[i] * (midY * 0.8f);
-            if (i == 0) p2.startNewSubPath(x, y);
-            else p2.lineTo(x, y);
-        }
-        g.strokePath(p2, juce::PathStrokeType(2.0f));
-
-        // Glow layer
-        g.setColour(juce::Colour(0x40ff00aa));
-        g.strokePath(p2, juce::PathStrokeType(6.0f));
-    }
-
-    // Labels
-    g.setColour(juce::Colour(0xff00f0ff));
-    g.setFont(juce::Font(10.0f));
-    g.drawText("OSC1", 5, 5, 40, 15, juce::Justification::centredLeft);
-
-    g.setColour(juce::Colour(0xffff00aa));
-    g.drawText("OSC2", 5, 20, 40, 15, juce::Justification::centredLeft);
-}
-
-void Oscilloscope::update(const std::vector<float>& osc1, const std::vector<float>& osc2)
-{
-    auto lock = juce::ScopedLock(bufferLock_);
-    osc1Buffer_ = osc1;
-    osc2Buffer_ = osc2;
-    repaint();
+    // Label
+    g.setColour(juce::Colour(0xff666670));
+    g.setFont(juce::Font(juce::FontOptions(10.0f, juce::Font::plain)));
+    g.drawText("OSCILLOSCOPE", 2, 2, 100, 14, juce::Justification::centredLeft);
 }
 
 } // namespace NeonSynth

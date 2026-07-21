@@ -1,16 +1,16 @@
 /*
-  NeonSynth - PluginProcessor
-  Main AudioProcessor with parameter tree and DSP routing
+  NeonSynth - Audio Processor
+  JUCE 8.0.14 compatible (old API: prepareToPlay/processBlock)
 */
 
 #pragma once
 
 #include <JuceHeader.h>
 #include "DSP/VoiceManager.h"
-#include "DSP/Oscillator.h"
-#include "DSP/Filter.h"
 
 namespace NeonSynth {
+
+class PluginEditor;
 
 class PluginProcessor : public juce::AudioProcessor
 {
@@ -18,51 +18,33 @@ public:
     PluginProcessor();
     ~PluginProcessor() override;
 
-    void prepare(const juce::AudioProcessorPrepareInfo& info) override;
-    void processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi) override;
+    void prepareToPlay(double sampleRate, int samplesPerBlock) override;
+    void releaseResources() override {}
+    void processBlock(juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
     void reset() override;
 
+    bool isMidiEffect() const override { return false; }
     juce::AudioProcessorEditor* createEditor() override;
-    juce::String getName() const override;
+    bool hasEditor() const override { return true; }
+    const juce::String getName() const override { return "NeonSynth"; }
+
+    double getTailLengthSeconds() const override { return 0.0; }
     bool acceptsMidi() const override { return true; }
     bool producesMidi() const override { return false; }
-    bool isMidiEffect() const override { return false; }
-    double getTailSeconds() const override { return 2.0; }
-    bool wantsSolidButtonBackground() const override { return true; }
-    int getNumPrograms() override { return 0; }
+
+    int getNumPrograms() override { return 1; }
     int getCurrentProgram() override { return 0; }
+    void setCurrentProgram(int) override {}
+    const juce::String getProgramName(int) override { return "Default"; }
     void changeProgramName(int, const juce::String&) override {}
-    void changeProgram(int) override {}
-    void getStateInformation(juce::MemoryBlock&) override {}
-    void setStateInformation(const void*, int) override {}
 
-    /** Get the voice manager (for UI oscilloscope access) */
-    VoiceManager& getVoiceManager() { return voiceManager_; }
-
-    // ---- Parameters ----
-    juce::RangedParameter<float>* paramOsc1Waveform;
-    juce::RangedParameter<float>* paramOsc1Detune;
-    juce::RangedParameter<float>* paramOsc1Gain;
-    juce::RangedParameter<float>* paramOsc1Pan;
-    juce::RangedParameter<float>* paramOsc2Waveform;
-    juce::RangedParameter<float>* paramOsc2Detune;
-    juce::RangedParameter<float>* paramOsc2Gain;
-    juce::RangedParameter<float>* paramOsc2Pan;
-    juce::RangedParameter<float>* paramAmpEnvAttack;
-    juce::RangedParameter<float>* paramAmpEnvDecay;
-    juce::RangedParameter<float>* paramAmpEnvSustain;
-    juce::RangedParameter<float>* paramAmpEnvRelease;
-    juce::RangedParameter<float>* paramFilterEnvAttack;
-    juce::RangedParameter<float>* paramFilterEnvDecay;
-    juce::RangedParameter<float>* paramFilterEnvSustain;
-    juce::RangedParameter<float>* paramFilterEnvRelease;
-    juce::RangedParameter<float>* paramFilterType;
-    juce::RangedParameter<float>* paramFilterCutoff;
-    juce::RangedParameter<float>* paramFilterResonance;
+    void getStateInformation(juce::MemoryBlock& data) override;
+    void setStateInformation(const void* data, int sizeInBytes) override;
 
 private:
+    juce::AudioProcessorValueTreeState apvts_;
     VoiceManager voiceManager_;
-    bool initialized_ = false;
+    std::unique_ptr<PluginEditor> editor_;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginProcessor)
 };

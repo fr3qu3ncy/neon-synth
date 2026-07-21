@@ -1,149 +1,155 @@
 /*
-  NeonSynth - PluginProcessor Implementation
+  NeonSynth - Audio Processor Implementation
+  JUCE 8.0.14 compatible (old API: prepareToPlay/processBlock)
 */
 
 #include "PluginProcessor.h"
+#include "PluginEditor.h"
 
 namespace NeonSynth {
 
+//==============================================================================
 PluginProcessor::PluginProcessor()
     : AudioProcessor(juce::AudioProcessor::BusesProperties()
-          .withInput("Input", juce::AudioChannelSet::disabled(), false)
-          .withOutput("Output", juce::AudioChannelSet::stereo(), true))
+                     .withInput("Input", juce::AudioChannelSet::stereo(), true)
+                     .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
+      apvts_(*this, nullptr, "PARAMS", juce::AudioProcessorValueTreeState::ParameterLayout{})
 {
-    // ---- Oscillator 1 parameters ----
-    paramOsc1Waveform = &getParameters()->createParameter<float>(
-        "osc1wf", "OSC1 Waveform",
-        juce::NormalisableRange<float>(0.f, 3.99f, 1.f), 0.f,
-        [](float v, int s) { return juce::String({"Sine", "Saw", "Square", "Triangle"})[static_cast<int>(v)]; },
-        [](const juce::String& t) {
-            static const juce::StringArray w{"Sine", "Saw", "Square", "Triangle"};
-            return static_cast<float>(w.indexOf(t));
-        }, juce::AudioProcessorParameter::genericParameter);
+    // Oscillator 1
+    apvts_.createAndAddParameter(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID{"osc1wave", 1}, "Osc1 Wave", 0, 3, 0));
+    apvts_.createAndAddParameter(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{"osc1pitch", 1}, "Osc1 Pitch",
+        juce::NormalisableRange<float>(-24.0f, 24.0f, 1.0f), 0.0f));
+    apvts_.createAndAddParameter(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{"osc1detune", 1}, "Osc1 Detune",
+        juce::NormalisableRange<float>(-12.0f, 12.0f, 0.1f), 0.0f));
 
-    paramOsc1Detune = &getParameters()->createParameter<float>(
-        "osc1dt", "OSC1 Detune", juce::NormalisableRange<float>(-50.f, 50.f), 0.f,
-        juce::AudioProcessorParameter::floatToString, juce::AudioProcessorParameter::stringToFloat);
+    // Oscillator 2
+    apvts_.createAndAddParameter(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID{"osc2wave", 1}, "Osc2 Wave", 0, 3, 0));
+    apvts_.createAndAddParameter(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{"osc2pitch", 1}, "Osc2 Pitch",
+        juce::NormalisableRange<float>(-12.0f, 12.0f, 1.0f), 0.0f));
+    apvts_.createAndAddParameter(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{"osc2detune", 1}, "Osc2 Detune",
+        juce::NormalisableRange<float>(-12.0f, 12.0f, 0.1f), 0.0f));
+    apvts_.createAndAddParameter(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{"osc2mix", 1}, "Osc2 Mix",
+        juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f), 0.5f));
 
-    paramOsc1Gain = &getParameters()->createParameter<float>(
-        "osc1gn", "OSC1 Gain", juce::NormalisableRange<float>(0.f, 1.f), 0.5f);
+    // Filter
+    apvts_.createAndAddParameter(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{"fcutoff", 1}, "Cutoff",
+        juce::NormalisableRange<float>(20.0f, 20000.0f, 1.0f, 0.1f), 5000.0f));
+    apvts_.createAndAddParameter(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{"fres", 1}, "Resonance",
+        juce::NormalisableRange<float>(0.0f, 0.95f, 0.01f), 0.0f));
+    apvts_.createAndAddParameter(std::make_unique<juce::AudioParameterInt>(
+        juce::ParameterID{"ftype", 1}, "Filter Type", 0, 2, 0));
 
-    paramOsc1Pan = &getParameters()->createParameter<float>(
-        "osc1pn", "OSC1 Pan", juce::NormalisableRange<float>(-1.f, 1.f), 0.f);
+    // Envelope
+    apvts_.createAndAddParameter(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{"eattack", 1}, "Attack",
+        juce::NormalisableRange<float>(0.001f, 2.0f, 0.001f, 0.1f), 0.01f));
+    apvts_.createAndAddParameter(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{"edecay", 1}, "Decay",
+        juce::NormalisableRange<float>(0.01f, 2.0f, 0.01f, 0.1f), 0.3f));
+    apvts_.createAndAddParameter(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{"esustain", 1}, "Sustain",
+        juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f), 0.7f));
+    apvts_.createAndAddParameter(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{"erelease", 1}, "Release",
+        juce::NormalisableRange<float>(0.01f, 3.0f, 0.01f, 0.1f), 0.5f));
 
-    // ---- Oscillator 2 parameters ----
-    paramOsc2Waveform = &getParameters()->createParameter<float>(
-        "osc2wf", "OSC2 Waveform",
-        juce::NormalisableRange<float>(0.f, 3.99f, 1.f), 1.f,
-        [](float v, int s) { return juce::String({"Sine", "Saw", "Square", "Triangle"})[static_cast<int>(v)]; },
-        [](const juce::String& t) {
-            static const juce::StringArray w{"Sine", "Saw", "Square", "Triangle"};
-            return static_cast<float>(w.indexOf(t));
-        }, juce::AudioProcessorParameter::genericParameter);
-
-    paramOsc2Detune = &getParameters()->createParameter<float>(
-        "osc2dt", "OSC2 Detune", juce::NormalisableRange<float>(-50.f, 50.f), 0.f);
-
-    paramOsc2Gain = &getParameters()->createParameter<float>(
-        "osc2gn", "OSC2 Gain", juce::NormalisableRange<float>(0.f, 1.f), 0.5f);
-
-    paramOsc2Pan = &getParameters()->createParameter<float>(
-        "osc2pn", "OSC2 Pan", juce::NormalisableRange<float>(-1.f, 1.f), 0.f);
-
-    // ---- Amplitude Envelope ----
-    paramAmpEnvAttack = &getParameters()->createParameter<float>(
-        "aenvat", "Amp Attack", juce::NormalisableRange<float>(0.001f, 5.f), 0.01f);
-    paramAmpEnvDecay = &getParameters()->createParameter<float>(
-        "aenvdc", "Amp Decay", juce::NormalisableRange<float>(0.001f, 5.f), 0.3f);
-    paramAmpEnvSustain = &getParameters()->createParameter<float>(
-        "aenvsu", "Amp Sustain", juce::NormalisableRange<float>(0.f, 1.f), 0.7f);
-    paramAmpEnvRelease = &getParameters()->createParameter<float>(
-        "aenvrl", "Amp Release", juce::NormalisableRange<float>(0.001f, 10.f), 0.5f);
-
-    // ---- Filter Envelope ----
-    paramFilterEnvAttack = &getParameters()->createParameter<float>(
-        "fenvat", "Filter Env Attack", juce::NormalisableRange<float>(0.001f, 5.f), 0.01f);
-    paramFilterEnvDecay = &getParameters()->createParameter<float>(
-        "fenvdc", "Filter Env Decay", juce::NormalisableRange<float>(0.001f, 5.f), 0.3f);
-    paramFilterEnvSustain = &getParameters()->createParameter<float>(
-        "fenvsu", "Filter Env Sustain", juce::NormalisableRange<float>(0.f, 1.f), 0.5f);
-    paramFilterEnvRelease = &getParameters()->createParameter<float>(
-        "fenvrl", "Filter Env Release", juce::NormalisableRange<float>(0.001f, 10.f), 0.5f);
-
-    // ---- Filter ----
-    paramFilterType = &getParameters()->createParameter<float>(
-        "fltyp", "Filter Type",
-        juce::NormalisableRange<float>(0.f, 1.99f, 1.f), 0.f,
-        [](float v, int s) { return juce::String({"LP", "HP", "BP"})[static_cast<int>(v)]; },
-        [](const juce::String& t) {
-            static const juce::StringArray f{"LP", "HP", "BP"};
-            return static_cast<float>(f.indexOf(t));
-        }, juce::AudioProcessorParameter::genericParameter);
-
-    paramFilterCutoff = &getParameters()->createParameter<float>(
-        "flcut", "Filter Cutoff", juce::NormalisableRange<float>(20.f, 20000.f), 1000.f);
-    paramFilterResonance = &getParameters()->createParameter<float>(
-        "flres", "Filter Resonance", juce::NormalisableRange<float>(0.f, 0.9f), 0.0f);
+    // Master
+    apvts_.createAndAddParameter(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID{"master", 1}, "Master Vol",
+        juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f), 0.7f));
 }
 
 PluginProcessor::~PluginProcessor() = default;
 
-void PluginProcessor::prepare(const juce::AudioProcessorPrepareInfo& info)
+//==============================================================================
+void PluginProcessor::prepareToPlay(double sampleRate, int /*samplesPerBlock*/)
 {
-    if (!initialized_)
-    {
-        voiceManager_.setSampleRate(info.sampleRate);
-        initialized_ = true;
-    }
-}
-
-void PluginProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
-{
-    juce::ScopedNoDenormals noDenormals;
-
-    // Process MIDI events
-    midi.removeAllEventsUntilNextActiveSensing();
-
-    for (int i = 0; i < buffer.getNumChannels(); ++i)
-        buffer.clear(i, 0, buffer.getNumSamples());
-
-    // Process MIDI notes
-    juce::MidiMessageSequence messages(midi);
-    for (const auto metadata : messages)
-    {
-        const auto& message = metadata.message;
-        int samplePos = static_cast<int>(metadata.samplePosition);
-
-        if (message.isNoteOn())
-            voiceManager_.noteOn(message.getNote(), message.getVelocityScaled0To1());
-        else if (message.isNoteOff())
-            voiceManager_.noteOff(message.getNote());
-    }
-
-    // Process audio
-    for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
-    {
-        double outL = 0.0, outR = 0.0;
-        voiceManager_.processSample(outL, outR);
-
-        for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
-            buffer.setSample(ch, sample, static_cast<float>(ch == 0 ? outL : outR));
-    }
+    voiceManager_.setSampleRate(sampleRate);
 }
 
 void PluginProcessor::reset()
 {
-    initialized_ = false;
+    // Nothing to reset in this version
 }
 
+//==============================================================================
+void PluginProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
+{
+    const int numSamples = (int)buffer.getNumSamples();
+
+    // Handle MIDI events
+    for (auto metadata : midi)
+    {
+        auto message = metadata.getMessage();
+        if (message.isNoteOn())
+            voiceManager_.noteOn(message.getNoteNumber(), message.getVelocity() / 127.0f);
+        else if (message.isNoteOff())
+            voiceManager_.noteOff(message.getNoteNumber());
+    }
+    midi.clear();
+
+    // Process audio
+    const int numChannels = (int)buffer.getNumChannels();
+    float* outLeft = buffer.getWritePointer(0, 0);
+    float* outRight = (numChannels > 1) ? buffer.getWritePointer(1, 0) : outLeft;
+
+    for (int sample = 0; sample < numSamples; ++sample)
+    {
+        double outL = 0.0;
+        double outR = 0.0;
+        voiceManager_.processSample(outL, outR);
+        outLeft[sample] = (float)outL;
+        outRight[sample] = (float)outR;
+    }
+}
+
+//==============================================================================
+void PluginProcessor::getStateInformation(juce::MemoryBlock& data)
+{
+    auto state = apvts_.copyState();
+    auto xml = state.createXml();
+    if (xml)
+    {
+        auto xmlData = xml->toString();
+        data.replaceAll(xmlData.toRawUTF8(), (size_t)xmlData.length());
+    }
+}
+
+void PluginProcessor::setStateInformation(const void* data, int sizeInBytes)
+{
+    if (!data || sizeInBytes <= 0)
+        return;
+
+    juce::String xmlString((const char*)data, sizeInBytes);
+    auto xml = juce::parseXML(xmlString);
+    if (xml)
+    {
+        auto tree = juce::ValueTree::fromXml(*xml);
+        if (tree.isValid())
+            apvts_.replaceState(tree);
+    }
+}
+
+//==============================================================================
 juce::AudioProcessorEditor* PluginProcessor::createEditor()
 {
-    return new juce::AudioProcessorEditor(*this); // Placeholder - replaced by PluginEditor
-}
-
-juce::String PluginProcessor::getName() const
-{
-    return JucePlugin_Name;
+    editor_ = std::make_unique<PluginEditor>(*this);
+    return editor_.get();
 }
 
 } // namespace NeonSynth
+
+// Create the plugin
+juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
+{
+    return new NeonSynth::PluginProcessor();
+}

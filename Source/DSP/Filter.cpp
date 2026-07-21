@@ -5,7 +5,7 @@
 
 #include "Filter.h"
 
-namespace NeonSynTh {
+namespace NeonSynth {
 
 Filter::Filter() = default;
 
@@ -38,7 +38,7 @@ double Filter::processSample(double input)
 
     // Compute SVF coefficients
     double fc = cutoff_;
-    double omega = 2.0 * MathConstants<double>::pi * fc / sampleRate_;
+    double omega = 2.0 * juce::MathConstants<double>::pi * fc / sampleRate_;
 
     // Clamp omega to prevent instability
     omega = juce::jlimit(0.01, 0.99, omega);

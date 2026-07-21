@@ -1,102 +1,102 @@
 /*
-  NeonSynth - Filter Editor Implementation
+  NeonSynth - Filter Editor Panel
+  Filter type selection, cutoff, resonance
+  JUCE 8 compatible
 */
 
-#include "UI/FilterEditor.h"
+#include "PluginProcessor.h"
+#include "UI/LookAndFeelNeon.h"
 
 namespace NeonSynth {
 
-FilterEditor::FilterEditor()
+class FilterEditor : public juce::Component
 {
-    setOpaque(true);
-}
-
-FilterEditor::~FilterEditor() = default;
-
-void FilterEditor::setCutoff(double hz) { cutoff_ = hz; repaint(); }
-void FilterEditor::setResonance(double r) { resonance_ = r; repaint(); }
-void FilterEditor::setType(int t) { filterType_ = t; repaint(); }
-
-double FilterEditor::getResponse(double freq) const
-{
-    double ratio = freq / cutoff_;
-    double q = 1.0 - resonance_;
-
-    if (filterType_ == 0) // LP
-        return 1.0 / std::sqrt(std::pow(1.0 - ratio * ratio, 2) + std::pow(ratio / q, 2));
-    if (filterType_ == 1) // HP
-        return ratio * ratio / std::sqrt(std::pow(1.0 - ratio * ratio, 2) + std::pow(ratio / q, 2));
-    // BP
-    return (ratio / q) / std::sqrt(std::pow(1.0 - ratio * ratio, 2) + std::pow(ratio / q, 2));
-}
-
-void FilterEditor::paint(juce::Graphics& g)
-{
-    g.fillAll(juce::Colour(0xff08080a));
-
-    int w = getWidth();
-    int h = getHeight();
-    int margin = 20;
-
-    // Title
-    g.setColour(juce::Colour(0xff4060ff));
-    g.setFont(juce::Font(12.0f, juce::Font::bold));
-    g.drawText("FILTER RESPONSE", margin, 5, 150, 16, juce::Justification::centredLeft);
-
-    // Frequency axis (logarithmic, 20Hz - 20kHz)
-    double logMin = std::log(20.0);
-    double logMax = std::log(20000.0);
-
-    // Grid
-    g.setColour(juce::Colour(0x154060ff));
-    for (int f : {50, 100, 200, 500, 1000, 2000, 5000, 10000})
+public:
+    FilterEditor(PluginProcessor& p)
+        : processor(p),
+          filterType("Filter Type"),
+          cutoffSlider("Cutoff"),
+          resSlider("Resonance")
     {
-        double x = margin + (std::log(static_cast<double>(f)) - logMin) / (logMax - logMin)
-                   * (w - 2 * margin);
-        g.drawLine(static_cast<int>(x), margin, static_cast<int>(x), h - margin, 1.0f);
+        filterType.addItem("LP", 1);
+        filterType.addItem("HP", 2);
+        filterType.addItem("BP", 3);
+        filterType.setSelectedId(1);
 
-        g.setColour(juce::Colour(0xff666670));
-        g.setFont(juce::Font(8.0f));
-        g.drawText(juce::String(f) + "Hz", static_cast<int>(x) - 10, h - 12, 30, 10);
+        cutoffSlider.setRange(20.0, 20000.0);
+        cutoffSlider.setValue(1000.0);
+        cutoffSlider.setTextBoxStyle(juce::Slider::NoTextBox, true, 80, 20);
+
+        resSlider.setRange(0.0, 0.9);
+        resSlider.setValue(0.0);
+        resSlider.setTextBoxStyle(juce::Slider::NoTextBox, true, 80, 20);
+
+        addAndMakeVisible(filterType);
+        addAndMakeVisible(cutoffSlider);
+        addAndMakeVisible(resSlider);
+    }
+
+    ~FilterEditor() override = default;
+
+    void paint(juce::Graphics& g) override
+    {
+        g.fillAll(juce::Colour(0xff08080a));
+
+        // Title
+        g.setColour(juce::Colour(0xff00ffff));
+        g.setFont(juce::Font(juce::FontOptions(14.0f, juce::Font::bold)));
+        g.drawText("FILTER", 10, 5, 100, 20, juce::Justification::centredLeft);
+
+        // Draw filter curve visualization
+        int w = getWidth();
+        int h = getHeight();
+        int curveH = h - 60;
+
         g.setColour(juce::Colour(0x154060ff));
+        g.drawRect(10, 30, w - 20, curveH, 1);
+
+        // Simple magnitude response curve
+        juce::Path path;
+        bool first = true;
+        for (int x = 0; x < w - 20; ++x)
+        {
+            double freq = 20.0 + (double)x / (w - 20) * 19980.0;
+            double mag = getCutoff() > 0 ? std::min(1.0, freq / getCutoff()) : 0.0;
+            float px = 10 + x;
+            float py = 30 + curveH - (float)mag * (curveH - 10);
+
+            if (first)
+            {
+                path.startNewSubPath(px, py);
+                first = false;
+            }
+            else
+            {
+                path.lineTo(px, py);
+            }
+        }
+
+        g.setColour(juce::Colour(0xff4060ff));
+        g.strokePath(path, juce::PathStrokeType(2.0f));
     }
 
-    // Response curve
-    juce::Path curve;
-    bool first = true;
-
-    for (int x = margin; x < w - margin; ++x)
+    void resized() override
     {
-        double logFreq = logMin + (static_cast<double>(x - margin) / (w - 2 * margin))
-                         * (logMax - logMin);
-        double freq = std::exp(logFreq);
-        double mag = getResponse(freq);
+        int w = getWidth();
+        int h = getHeight();
 
-        int y = h - margin - static_cast<int>(mag * (h - 2 * margin));
-
-        if (first)
-        {
-            curve.startNewSubPath(x, y);
-            first = false;
-        }
-        else
-        {
-            curve.lineTo(x, y);
-        }
+        filterType.setBounds(10, h - 30, 80, 25);
+        cutoffSlider.setBounds(100, h - 50, w - 120, 20);
+        resSlider.setBounds(100, h - 25, w - 120, 20);
     }
 
-    // Glow
-    g.setColour(juce::Colour(0x304060ff));
-    g.strokePath(curve, juce::PathStrokeType(8.0f));
+private:
+    PluginProcessor& processor;
+    juce::ComboBox filterType;
+    juce::Slider cutoffSlider;
+    juce::Slider resSlider;
 
-    // Main line
-    g.setColour(juce::Colour(0xff4060ff));
-    g.strokePath(curve, juce::PathStrokeType(2.0f));
-
-    // Cutoff marker
-    double cutX = margin + (std::log(cutoff_) - logMin) / (logMax - logMin) * (w - 2 * margin);
-    g.setColour(juce::Colour(0xffff00aa));
-    g.drawLine(static_cast<int>(cutX), margin, static_cast<int>(cutX), h - margin, 2.0f);
-}
+    double getCutoff() const { return cutoffSlider.getValue(); }
+};
 
 } // namespace NeonSynth

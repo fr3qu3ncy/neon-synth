@@ -48,7 +48,7 @@ void Oscillator::buildWavetables()
     // Sine - pure
     for (int i = 0; i < N; ++i)
     {
-        double angle = 2.0 * MathConstants<double>::pi * i / N;
+        double angle = 2.0 * juce::MathConstants<double>::pi * i / N;
         sineTable_[i] = std::sin(angle);
     }
 
@@ -67,9 +67,9 @@ void Oscillator::buildWavetables()
         {
             double h2 = h * h;
             double sign = ((h % 4) == 1) ? 1.0 : -1.0;
-            sum += sign * std::sin(2.0 * MathConstants<double>::pi * h * t) / h2;
+            sum += sign * std::sin(2.0 * juce::MathConstants<double>::pi * h * t) / h2;
         }
-        triangleTable_[i] = sum * (4.0 / MathConstants<double>::pi);
+        triangleTable_[i] = sum * (4.0 / juce::MathConstants<double>::pi);
     }
 }
 
@@ -80,12 +80,12 @@ void Oscillator::buildBLIT(int tableSize, double fundamentalPeriod)
 
     for (int h = 1; h <= blitHarmonics_; ++h)
     {
-        double impulse = -2.0 * MathConstants<double>::pi * h
-            * std::sin(2.0 * MathConstants<double>::pi * h * fundamentalPeriod)
+        double impulse = -2.0 * juce::MathConstants<double>::pi * h
+            * std::sin(2.0 * juce::MathConstants<double>::pi * h * fundamentalPeriod)
             / tableSize;
         for (int i = 0; i < tableSize; ++i)
         {
-            blit[i] += std::sin(2.0 * MathConstants<double>::pi * h * i / tableSize) * impulse;
+            blit[i] += std::sin(2.0 * juce::MathConstants<double>::pi * h * i / tableSize) * impulse;
         }
     }
 
@@ -106,16 +106,16 @@ void Oscillator::buildBLIT2(int tableSize, double fundamentalPeriod)
 
     for (int h = 1; h <= blitHarmonics_; ++h)
     {
-        double impulse1 = -2.0 * MathConstants<double>::pi * h
-            * std::sin(2.0 * MathConstants<double>::pi * h * fundamentalPeriod)
+        double impulse1 = -2.0 * juce::MathConstants<double>::pi * h
+            * std::sin(2.0 * juce::MathConstants<double>::pi * h * fundamentalPeriod)
             / tableSize;
-        double impulse2 = -2.0 * MathConstants<double>::pi * h
-            * std::sin(2.0 * MathConstants<double>::pi * h * (fundamentalPeriod + 0.5))
+        double impulse2 = -2.0 * juce::MathConstants<double>::pi * h
+            * std::sin(2.0 * juce::MathConstants<double>::pi * h * (fundamentalPeriod + 0.5))
             / tableSize;
 
         for (int i = 0; i < tableSize; ++i)
         {
-            double angle = 2.0 * MathConstants<double>::pi * h * i / tableSize;
+            double angle = 2.0 * juce::MathConstants<double>::pi * h * i / tableSize;
             blit1[i] += std::sin(angle) * impulse1;
             blit2[i] += std::sin(angle) * impulse2;
         }

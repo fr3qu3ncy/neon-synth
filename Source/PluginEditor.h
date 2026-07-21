@@ -7,6 +7,7 @@
 
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
+#include "UI/LookAndFeelNeon.h"
 
 namespace NeonSynth {
 
@@ -21,13 +22,7 @@ public:
 
 private:
     PluginProcessor& processor_;
-
-    // UI components will be added here
-    // - Oscillator panels
-    // - Envelope editors
-    // - Filter section
-    // - Oscilloscope
-    // - Preset browser
+    LookAndFeelNeon lookAndFeel_;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(PluginEditor)
 };

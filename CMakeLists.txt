@@ -25,7 +25,7 @@ set(JUCE_ENABLE_MODULE_SOURCE_LOGOFF ON)
 set(JUCE_DISPLAY_SPLASH_SCREEN OFF)
 set(JUCE_WEB_BROWSER OFF)
 
-# --- Build plugin (DSP-only, no GUI editor) ---
+# --- Build plugin (VST3 with GUI) ---
 juce_add_plugin(NeonSynth
     PLUGIN_MANUFACTURER_CODE NeSy
     PLUGIN_CODE NnSy
@@ -38,16 +38,34 @@ juce_add_plugin(NeonSynth
     NEEDS_MIDI_OUTPUT NO
     IS_MIDI_PLUGIN NO
 
-    SOURCE_FILES
-        Source/PluginProcessor.cpp
-        Source/SynthEngine/Oscillator.cpp
-        Source/SynthEngine/Envelope.cpp
-        Source/SynthEngine/Filter.cpp
-
     VST3_CATEGORY "instrument"
     VST3_IS_A_SYNTH YES
     VST3_CAN_PROCESS_INPLACE NO
 )
+
+# --- Add our source files ---
+target_sources(NeonSynth PRIVATE
+    # Plugin entry
+    Source/PluginProcessor.cpp
+    Source/PluginEditor.cpp
+
+    # DSP engine
+    Source/DSP/Oscillator.cpp
+    Source/DSP/Envelope.cpp
+    Source/DSP/Filter.cpp
+    Source/DSP/Voice.cpp
+    Source/DSP/VoiceManager.cpp
+
+    # UI components
+    Source/UI/LookAndFeelNeon.cpp
+    Source/UI/EnvelopeEditor.cpp
+    Source/UI/FilterEditor.cpp
+    Source/UI/Oscilloscope.cpp
+    Source/UI/PresetBrowser.cpp
+)
+
+# --- Generate JuceHeader.h ---
+juce_generate_juce_header(NeonSynth)
 
 # --- Include directories ---
 target_include_directories(NeonSynth PRIVATE
@@ -55,12 +73,21 @@ target_include_directories(NeonSynth PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/JUCE/modules
 )
 
-# --- Link only audio modules (no GUI) ---
+# --- Link audio + GUI modules ---
 target_link_libraries(NeonSynth PRIVATE
     juce_audio_plugin_client
     juce_audio_utils
     juce_dsp
     juce_core
+    juce_gui_basics
+    juce_gui_extra
+    juce_graphics
+)
+
+# --- VST3-only defines ---
+target_compile_definitions(NeonSynth PRIVATE
+    JUCE_VST3_CAN_REPLACE_VST2=1
+    JUCE_IGNORE_VST3_MISMATCHED_PARAMETER_ID_WARNING=1
 )
 
 # --- Optimizations ---
