@@ -1,0 +1,8 @@
+{
+  "name": "Acid Bass",
+  "osc1": { "waveform": "Square", "detune": 0, "gain": 0.7, "pan": 0.0 },
+  "osc2": { "waveform": "Saw", "detune": -12, "gain": 0.4, "pan": 0.0 },
+  "ampEnv": { "attack": 0.001, "decay": 0.2, "sustain": 0.3, "release": 0.1 },
+  "filterEnv": { "attack": 0.001, "decay": 0.15, "sustain": 0.8, "release": 0.2 },
+  "filter": { "type": "LP", "cutoff": 400, "resonance": 0.75 }
+}

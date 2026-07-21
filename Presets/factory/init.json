@@ -1,0 +1,8 @@
+{
+  "name": "Init",
+  "osc1": { "waveform": "Saw", "detune": 0, "gain": 0.5, "pan": 0.0 },
+  "osc2": { "waveform": "Sine", "detune": 0, "gain": 0.5, "pan": 0.0 },
+  "ampEnv": { "attack": 0.01, "decay": 0.3, "sustain": 0.7, "release": 0.5 },
+  "filterEnv": { "attack": 0.01, "decay": 0.3, "sustain": 0.5, "release": 0.5 },
+  "filter": { "type": "LP", "cutoff": 1000, "resonance": 0.0 }
+}

@@ -1,0 +1,27 @@
+#!/bin/bash
+# Stub pkg-config for JUCE CMake configure
+# Returns success for all queries
+case "$*" in
+    *"--modversion"*|*"--version"*)
+        echo "1.0.0"
+        ;;
+    *"--cflags"*|*"--libs"*)
+        # Return known libraries
+        case "$*" in
+            *x11*) echo "-I/usr/include/X11 -L/usr/lib/x86_64-linux-gnu -lX11" ;;
+            *xrandr*) echo "-L/usr/lib/x86_64-linux-gnu -lXrandr" ;;
+            *xkbcommon*) echo "-L/usr/lib/x86_64-linux-gnu -lxkbcommon" ;;
+            *freetype*) echo "-I/usr/include -L/usr/lib/x86_64-linux-gnu -lfreetype" ;;
+            *alsa*) echo "-L/usr/lib/x86_64-linux-gnu -lasound" ;;
+            *jack*) echo "-L/usr/lib/x86_64-linux-gnu -ljack" ;;
+            *gl*) echo "-lGL" ;;
+            *) echo "" ;;
+        esac
+        ;;
+    *"--exists"*)
+        exit 0
+        ;;
+    *)
+        exit 0
+        ;;
+esac

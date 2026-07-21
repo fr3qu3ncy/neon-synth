@@ -1,0 +1,8 @@
+{
+  "name": "Warm Pad",
+  "osc1": { "waveform": "Saw", "detune": -5, "gain": 0.6, "pan": -0.3 },
+  "osc2": { "waveform": "Saw", "detune": 5, "gain": 0.6, "pan": 0.3 },
+  "ampEnv": { "attack": 0.8, "decay": 0.5, "sustain": 0.8, "release": 2.0 },
+  "filterEnv": { "attack": 0.5, "decay": 0.3, "sustain": 0.4, "release": 1.0 },
+  "filter": { "type": "LP", "cutoff": 800, "resonance": 0.1 }
+}

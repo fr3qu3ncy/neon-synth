@@ -1,0 +1,8 @@
+{
+  "name": "Neon Sweep",
+  "osc1": { "waveform": "Saw", "detune": 0, "gain": 0.5, "pan": -0.5 },
+  "osc2": { "waveform": "Saw", "detune": 0, "gain": 0.5, "pan": 0.5 },
+  "ampEnv": { "attack": 0.3, "decay": 1.0, "sustain": 0.6, "release": 1.5 },
+  "filterEnv": { "attack": 0.5, "decay": 0.8, "sustain": 0.9, "release": 1.0 },
+  "filter": { "type": "BP", "cutoff": 1500, "resonance": 0.4 }
+}
