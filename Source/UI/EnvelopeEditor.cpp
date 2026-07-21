@@ -29,7 +29,7 @@ void EnvelopeEditor::paint(juce::Graphics& g)
 
     // Title
     g.setColour(juce::Colour(0xff00f0ff));
-    g.setFont(juce::Font(12.0f, juce::Font::bold));
+    g.setFont(juce::Font(juce::FontOptions(12.0f, juce::Font::bold)));
     g.drawText(title_, margin, 5, 100, 16, juce::Justification::centredLeft);
 
     // Draw ADSR envelope shape
@@ -64,7 +64,7 @@ void EnvelopeEditor::paint(juce::Graphics& g)
 
     // Phase labels
     g.setColour(juce::Colour(0xff666670));
-    g.setFont(juce::Font(9.0f));
+    g.setFont(juce::Font(juce::FontOptions(9.0f)));
     g.drawText("A", margin + 5, h - 15, 15, 12, juce::Justification::centred);
     g.drawText("D", static_cast<int>(aEnd), h - 15, 15, 12, juce::Justification::centred);
     g.drawText("S", static_cast<int>(dEnd), h - 15, 15, 12, juce::Justification::centred);

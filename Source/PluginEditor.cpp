@@ -22,7 +22,7 @@ namespace NeonSynth
         osc1Wave_.addItem("Triangle", 4);
         addAndMakeVisible(osc1Wave_);
         osc1WaveLabel_.setText("OSC1 Wave", juce::dontSendNotification);
-        osc1WaveLabel_.setFont(juce::Font(juce::Font::getDefaultSansSerifFontName(), 12, juce::Font::bold));
+        osc1WaveLabel_.setFont(juce::Font(juce::FontOptions(12.0f, juce::Font::bold)));
         addAndMakeVisible(osc1WaveLabel_);
 
         // --- Oscillator 2 wave ---
@@ -32,7 +32,7 @@ namespace NeonSynth
         osc2Wave_.addItem("Triangle", 4);
         addAndMakeVisible(osc2Wave_);
         osc2WaveLabel_.setText("OSC2 Wave", juce::dontSendNotification);
-        osc2WaveLabel_.setFont(juce::Font(juce::Font::getDefaultSansSerifFontName(), 12, juce::Font::bold));
+        osc2WaveLabel_.setFont(juce::Font(juce::FontOptions(12.0f, juce::Font::bold)));
         addAndMakeVisible(osc2WaveLabel_);
 
         // --- Filter type ---
@@ -41,7 +41,7 @@ namespace NeonSynth
         filterType_.addItem("Band Pass", 3);
         addAndMakeVisible(filterType_);
         filterTypeLabel_.setText("Filter Type", juce::dontSendNotification);
-        filterTypeLabel_.setFont(juce::Font(juce::Font::getDefaultSansSerifFontName(), 12, juce::Font::bold));
+        filterTypeLabel_.setFont(juce::Font(juce::FontOptions(12.0f, juce::Font::bold)));
         addAndMakeVisible(filterTypeLabel_);
 
         // --- Detune sliders (horizontal with text box) ---
@@ -251,14 +251,14 @@ namespace NeonSynth
         filterSection.removeFromRight(10);
         filterTypeLabel_.setBounds(filterSection.removeFromTop(18));
         filterType_.setBounds(filterSection.removeFromTop(22));
-        auto filterParams = filterSection.withReduced(20, 0);
+        auto filterParams = filterSection.reduced(20, 0);
         filterCutoff_.setBounds(filterParams.removeFromLeft(filterParams.getWidth() / 2));
         filterRes_.setBounds(filterParams);
 
         bounds.removeFromTop(20);
 
         // Envelope section
-        auto envSection = bounds.withReduced(10, 10);
+        auto envSection = bounds.reduced(10, 10);
         auto ampEnv = envSection.removeFromLeft(envSection.getWidth() / 2);
         auto filterEnv = envSection;
 
