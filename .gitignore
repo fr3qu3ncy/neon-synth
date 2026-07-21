@@ -2,6 +2,10 @@
 Build/
 build/
 cmake-build-*/
+*.o
+*.so
+*.a
+*.dylib
 
 # IDE
 .vscode/
@@ -12,6 +16,13 @@ cmake-build-*/
 # macOS
 .DS_Store
 *.dSYM/
+
+# Windows
+*.vcxproj
+*.vcxproj.filters
+*.sln
+*.suo
+ipch/
 
 # Plugin output
 *.vst3
@@ -34,3 +45,4 @@ neon-headers/
 
 # Build artifacts
 build.log
+
