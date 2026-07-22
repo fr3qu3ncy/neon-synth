@@ -11,7 +11,6 @@ namespace NeonSynth {
 //==============================================================================
 PluginProcessor::PluginProcessor()
     : AudioProcessor(juce::AudioProcessor::BusesProperties()
-                     .withInput("Input", juce::AudioChannelSet::stereo(), true)
                      .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
       apvts_(*this, nullptr, "PARAMS", juce::AudioProcessorValueTreeState::ParameterLayout{})
 {
@@ -85,6 +84,9 @@ void PluginProcessor::reset()
 void PluginProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
 {
     const int numSamples = (int)buffer.getNumSamples();
+
+    // Silence the output buffer first
+    buffer.clear();
 
     // Handle MIDI events
     for (auto metadata : midi)
